@@ -140,14 +140,25 @@ for i, tab in enumerate(tabs, start=1):
                 hole_scores = {int(k): v for k, v in raw.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
 
-                # Hole input
-                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
+                                # Hole input
+                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}_{hole}")
                 c1, c2 = st.columns(2)
                 default = hole_scores.get(hole, {})
+                # Dynamic keys include player names to force widget update on settings change
                 if len(p1) == 1:
-                    s1 = c1.number_input(p1[0], 1, 10, default.get(p1[0], 1), key=f"{i}_{idx}_{hole}_0")
-                    s2 = c2.number_input(p2[0], 1, 10, default.get(p2[0], 1), key=f"{i}_{idx}_{hole}_1")
+                    key1 = f"{i}_{idx}_{hole}_{p1[0]}"
+                    key2 = f"{i}_{idx}_{hole}_{p2[0]}"
+                    s1 = c1.number_input(p1[0], 1, 10, default.get(p1[0], 1), key=key1)
+                    s2 = c2.number_input(p2[0], 1, 10, default.get(p2[0], 1), key=key2)
                     entry = {p1[0]: s1, p2[0]: s2}
+                else:
+                    p1key = "".join([name.replace(" ", "") for name in p1])
+                    p2key = "".join([name.replace(" ", "") for name in p2])
+                    key1 = f"{i}_{idx}_{hole}_{p1key}"
+                    key2 = f"{i}_{idx}_{hole}_{p2key}"
+                    s1 = c1.number_input(" & ".join(p1), 1, 10, default.get("Team A", 1), key=key1)
+                    s2 = c2.number_input(" & ".join(p2), 1, 10, default.get("Team B", 1), key=key2)
+                    entry = {"Team A": s1, "Team B": s2}
                 else:
                     s1 = c1.number_input(' & '.join(p1), 1, 10, default.get("Team A", 1), key=f"{i}_{idx}_{hole}_0")
                     s2 = c2.number_input(' & '.join(p2), 1, 10, default.get("Team B", 1), key=f"{i}_{idx}_{hole}_1")
