@@ -135,7 +135,9 @@ for i,tab in enumerate(tabs, start=1):
                 hole=st.select_slider("Hole",options=list(range(1,19)),key=f"h_{i}_{idx}")
                 c1,c2=st.columns(2); default=hole_scores.get(hole,{})
                 if len(p1)==1:
-                    k1=f"{i}_{idx}_{hole}_{p1[0]}", k2=f"{i}_{idx}_{hole}_{p2[0]}"
+                    k1 = f"{i}_{idx}_{hole}_{p1[0]}"
+
+                    k2 = f"{i}_{idx}_{hole}_{p2[0]}"
                     s1=c1.number_input(p1[0],1,10,default.get(p1[0],1),key=k1)
                     s2=c2.number_input(p2[0],1,10,default.get(p2[0],1),key=k2)
                     entry={p1[0]:s1,p2[0]:s2}
