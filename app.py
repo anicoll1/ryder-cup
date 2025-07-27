@@ -196,16 +196,15 @@ for i, tab in enumerate(tabs, start=1):
                     st.dataframe(df, hide_index=True)
                 else:
                     st.info("No hole scores entered yet.")
-                # Challenge activation UI
+                                # Challenge activation UI
                 st.subheader("Sabotage Challenges")
                 cols = st.columns([2, 3, 1])
+                # Pick challenger and challenge
                 challenger = cols[0].selectbox("Who?", options=p1 + p2, key=f"challenger_{i}_{idx}_{hole}")
                 challenge_choice = cols[1].selectbox("Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}")
-                # Display challenge description before activation
+                # Show description immediately
                 cols[1].caption(CHALLENGE_DESCRIPTIONS.get(challenge_choice, ""))
-# Display challenge description before activation
-time_description = CHALLENGE_DESCRIPTIONS.get(challenge_choice, "")
-cols[1].caption(time_description)
+                # Activation button
                 if cols[2].button("Activate Challenge", key=f"activate_{i}_{idx}_{hole}"):
                     half = 1 if hole <= 9 else 2
                     if any(c['challenger'] == challenger and c['half'] == half for c in challenges):
@@ -213,14 +212,18 @@ cols[1].caption(time_description)
                     else:
                         new = {"hole": hole, "half": half, "challenger": challenger, "challenge": challenge_choice}
                         challenges.append(new)
-                        scores_col.update_one({"day": i, "match_index": idx}, {"$set": {"challenges": challenges}}, upsert=True)
+                        scores_col.update_one(
+                            {"day": i, "match_index": idx},
+                            {"$set": {"challenges": challenges}},
+                            upsert=True,
+                        )
                         st.success(f"Challenge activated: {challenge_choice} on hole {hole}")
                 # Used challenges table
                 if challenges:
                     df_ch = pd.DataFrame([{"Hole": c["hole"], "Player": c["challenger"], "Challenge": c["challenge"]} for c in challenges])
                     st.table(df_ch)
                 else:
-                    st.info("No challenges used yet.")
+                    st.info("No challenges used yet.")")
 
 st.markdown("---")
 st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
