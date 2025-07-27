@@ -1,6 +1,5 @@
 import streamlit as st
 import certifi
-import ssl
 from pymongo import MongoClient
 
 # --- Configuration ---
@@ -14,14 +13,12 @@ if not db_uri:
 
 # Connect to MongoDB with TLS CA certs only
 try:
-    # Use default TLS settings but provide CA bundle
     client = MongoClient(
         db_uri,
         tlsCAFile=certifi.where(),
         connectTimeoutMS=30000,
         serverSelectionTimeoutMS=30000
     )
-    # Quick server check
     client.admin.command('ping')
 except Exception as e:
     st.error(
@@ -32,9 +29,6 @@ except Exception as e:
     st.stop()
 
 # Database and collection
-client.encoding = 'utf-8'  # ensure unicode support
-client_server_info = client.server_info()  # not used, ensures connection
-
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
@@ -71,19 +65,29 @@ def compute_points(hole_scores, p1, p2):
         pts = {p1[0]: 0, p2[0]: 0}
         for scores in hole_scores.values():
             s1 = scores.get(p1[0]); s2 = scores.get(p2[0])
-            if s1 is None or s2 is None: continue
-            if s1 < s2: pts[p1[0]] += 1
-            elif s1 > s2: pts[p2[0]] += 1
-            else: pts[p1[0]] += 0.5; pts[p2[0]] += 0.5
+            if s1 is None or s2 is None:
+                continue
+            if s1 < s2:
+                pts[p1[0]] += 1
+            elif s1 > s2:
+                pts[p2[0]] += 1
+            else:
+                pts[p1[0]] += 0.5
+                pts[p2[0]] += 0.5
         return pts
     else:
         pts = {"Team A": 0, "Team B": 0}
         for scores in hole_scores.values():
             s1 = scores.get("Team A"); s2 = scores.get("Team B")
-            if s1 is None or s2 is None: continue
-            if s1 < s2: pts["Team A"] += 1
-            elif s1 > s2: pts["Team B"] += 1
-            else: pts["Team A"] += 0.5; pts["Team B"] += 0.5
+            if s1 is None or s2 is None:
+                continue
+            if s1 < s2:
+                pts["Team A"] += 1
+            elif s1 > s2:
+                pts["Team B"] += 1
+            else:
+                pts["Team A"] += 0.5
+                pts["Team B"] += 0.5
         return pts
 
 # --- Settings Expander ---
@@ -150,23 +154,23 @@ for i, tab in enumerate(tabs, start=1):
                     s1 = c1.number_input(' & '.join(p1),1,10,default.get("Team A",1), key=f"{i}_{idx}_{hole}_0")
                     s2 = c2.number_input(' & '.join(p2),1,10,default.get("Team B",1), key=f"{i}_{idx}_{hole}_1")
                     entry = {"Team A": s1, "Team B": s2}
-                if st.button("Save", key=f"save_{i}_{idx}_{hole}"):
+                if st.button("Save Hole Score",  key=f"save_{i}_{idx}_{hole}"):
                     hole_scores[hole] = entry
-pts = compute_points(hole_scores, p1, p2)
-# convert hole_scores keys to strings for MongoDB
-db_hole_scores = {str(k): v for k, v in hole_scores.items()}
-update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": db_hole_scores}
-if len(p1) == 1:
-    update["total_points"] = pts
-else:
-    update["team_points"] = pts
-scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
-st.toast(f"Saved hole {hole}")
+                    pts = compute_points(hole_scores, p1, p2)
+                    db_hole_scores = {str(k): v for k, v in hole_scores.items()}
+                    update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": db_hole_scores}
+                    if len(p1) == 1:
+                        update["total_points"] = pts
+                    else:
+                        update["team_points"] = pts
+                    scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
+                    st.toast(f"Saved hole {hole}")
+                # Challenges UI
                 st.write("Used:", [f"{c['challenger']}@{c['hole']}" for c in challenges])
                 ch1, ch2, ch3 = st.columns([2,3,1])
                 challenger = ch1.selectbox("Who?", options=p1+p2, key=f"c_{i}_{idx}")
                 chall = ch2.selectbox("Challenge", options=CHALLENGES, key=f"ch_{i}_{idx}")
-                if ch3.button("Activate", key=f"a_{i}_{idx}_{hole}"):
+                if ch3.button("Activate Challenge",  key=f"a_{i}_{idx}_{hole}"):
                     half = 1 if hole <= 9 else 2
                     if any(c['challenger']==challenger and c['half']==half for c in challenges):
                         st.error("Already used this half.")
@@ -178,3 +182,4 @@ st.toast(f"Saved hole {hole}")
                 st.write("Holes:", sorted(hole_scores.items()))
 
 st.markdown("---")
+st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
