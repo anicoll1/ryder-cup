@@ -25,6 +25,7 @@ except Exception as e:
     st.error(f"MongoDB connection failed: {e}")
     st.stop()
 
+# Database
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
@@ -37,7 +38,7 @@ DAY_DETAILS = {
     3: {"subtitle": "Alternate Shot (Foursomes, 18 Holes)",
         "rules": ["One ball, alternate shots & tees.", "1 pt match, 0.5 tie.", "2 pts total"]}
 }
-# Challenge descriptions
+
 CHALLENGE_DESCRIPTIONS = {
     "🦅 NO TEE FOR YOU": "On the next tee box, the target must hit their driver directly off the ground—no tee allowed.",
     "💬 CADDY’S CHOICE": "You choose the target’s club for their next shot.",
@@ -68,7 +69,7 @@ def compute_points(hole_scores, p1, p2):
     if len(p1) == 1:
         pts = {p1[0]: 0, p2[0]: 0}
         for sc in hole_scores.values():
-            s1 = sc.get(p1[0]); s2 = sc.get(p2[0])
+            s1, s2 = sc.get(p1[0]), sc.get(p2[0])
             if s1 is None or s2 is None:
                 continue
             if s1 < s2:
@@ -79,10 +80,10 @@ def compute_points(hole_scores, p1, p2):
                 pts[p1[0]] += 0.5
                 pts[p2[0]] += 0.5
         return pts
-    # Teams
+    # Team
     pts = {"Team A": 0, "Team B": 0}
     for sc in hole_scores.values():
-        s1 = sc.get("Team A"); s2 = sc.get("Team B")
+        s1, s2 = sc.get("Team A"), sc.get("Team B")
         if s1 is None or s2 is None:
             continue
         if s1 < s2:
@@ -119,15 +120,15 @@ for day, ms in matches.items():
         else:
             totals["Team A"] += pts.get("Team A", 0)
             totals["Team B"] += pts.get("Team B", 0)
-col1.metric("Team A", totals["Team A"])
+col1.metric("Team A", totals["Team A"]);
 col1.markdown(f"**Roster A:** {', '.join(team_a)}")
-col2.metric("Team B", totals["Team B"])
+col2.metric("Team B", totals["Team B"]);
 col2.markdown(f"**Roster B:** {', '.join(team_b)}")
 if st.button("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
-    st.success("Tournament reset. Please refresh or reload to see changes.")
+    st.success("Tournament reset. Please refresh to see changes.")
 
-# --- Day Tabs & Match UI ---
+# --- Day Tabs & Matches ---
 tabs = st.tabs([f"Day {i}" for i in (1, 2, 3)])
 for i, tab in enumerate(tabs, start=1):
     with tab:
@@ -145,37 +146,37 @@ for i, tab in enumerate(tabs, start=1):
             else:
                 day_tot["Team A"] += pts.get("Team A", 0)
                 day_tot["Team B"] += pts.get("Team B", 0)
-        st.write(f"**Totals:** A {day_tot['Team A']} — B {day_tot['Team B']}")
+        st.write(f"**Totals:** A {day_tot['Team A']} — B {day_tot['Team B']}")
 
-        # Each match
+        # Matches
         for idx, (p1, p2) in enumerate(matches[i]):
-            with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
-                # Load existing data
+            with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
+                # Load data
                 rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players": (p1, p2), "hole_scores": {}, "challenges": []}
                 raw_scores = rec.get("hole_scores", {})
                 hole_scores = {int(k): v for k, v in raw_scores.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
 
-                                # Clear match
+                # Clear match
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
                     scores_col.delete_one({"day": i, "match_index": idx})
-                    st.success(f"Cleared Match {idx+1}. Please refresh or reload to see changes."))
+                    st.success(f"Cleared Match {idx+1}. Please refresh to see changes.")
 
                 # Hole entry
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
-                c1, c2 = st.columns(2)
+                col_a, col_b = st.columns(2)
                 default = hole_scores.get(hole, {})
                 if len(p1) == 1:
-                    k1 = f"{i}_{idx}_{hole}_{p1[0]}"
-                    k2 = f"{i}_{idx}_{hole}_{p2[0]}"
-                    s1 = c1.number_input(p1[0], 1, 10, default.get(p1[0], 1), key=k1)
-                    s2 = c2.number_input(p2[0], 1, 10, default.get(p2[0], 1), key=k2)
+                    key1 = f"{i}_{idx}_{hole}_{p1[0]}"
+                    key2 = f"{i}_{idx}_{hole}_{p2[0]}"
+                    s1 = col_a.number_input(p1[0], 1, 10, default.get(p1[0], 1), key=key1)
+                    s2 = col_b.number_input(p2[0], 1, 10, default.get(p2[0], 1), key=key2)
                     entry = {p1[0]: s1, p2[0]: s2}
                 else:
                     p1k = ''.join(p1)
                     p2k = ''.join(p2)
-                    s1 = c1.number_input(' & '.join(p1), 1, 10, default.get("Team A", 1), key=f"{i}_{idx}_{hole}_{p1k}")
-                    s2 = c2.number_input(' & '.join(p2), 1, 10, default.get("Team B", 1), key=f"{i}_{idx}_{hole}_{p2k}")
+                    s1 = col_a.number_input(' & '.join(p1), 1, 10, default.get("Team A", 1), key=f"{i}_{idx}_{hole}_{p1k}")
+                    s2 = col_b.number_input(' & '.join(p2), 1, 10, default.get("Team B", 1), key=f"{i}_{idx}_{hole}_{p2k}")
                     entry = {"Team A": s1, "Team B": s2}
                 if st.button("Save Hole Score", key=f"save_{i}_{idx}_{hole}"):
                     hole_scores[hole] = entry
@@ -186,7 +187,7 @@ for i, tab in enumerate(tabs, start=1):
                     scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
                     st.toast(f"Saved hole {hole}")
 
-                # Show hole scores
+                # Display hole scores
                 if hole_scores:
                     rows = []
                     for h, sc in sorted(hole_scores.items()):
@@ -202,22 +203,20 @@ for i, tab in enumerate(tabs, start=1):
                 else:
                     st.info("No hole scores entered yet.")
 
-                # Challenge activation
+                # Sabotage Challenges
                 st.subheader("Sabotage Challenges")
-                cols = st.columns([2, 3, 1])
-                challenger = cols[0].selectbox("Who?", options=p1 + p2, key=f"challenger_{i}_{idx}_{hole}")
-                challenge_choice = cols[1].selectbox("Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}")
-                cols[1].caption(CHALLENGE_DESCRIPTIONS.get(challenge_choice, ""))
-                if cols[2].button("Activate Challenge", key=f"activate_{i}_{idx}_{hole}"):
+                cols_ch = st.columns([2, 3, 1])
+                challenger = cols_ch[0].selectbox("Who?", options=p1 + p2, key=f"challenger_{i}_{idx}_{hole}")
+                challenge_choice = cols_ch[1].selectbox("Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}")
+                cols_ch[1].caption(CHALLENGE_DESCRIPTIONS[challenge_choice])
+                if cols_ch[2].button("Activate Challenge", key=f"activate_{i}_{idx}_{hole}"):
                     half = 1 if hole <= 9 else 2
                     if any(c['challenger'] == challenger and c['half'] == half for c in challenges):
                         st.error(f"{challenger} already used a challenge this half.")
                     else:
-                        new = {"hole": hole, "half": half, "challenger": challenger, "challenge": challenge_choice}
-                        challenges.append(new)
+                        challenges.append({"hole": hole, "half": half, "challenger": challenger, "challenge": challenge_choice})
                         scores_col.update_one({"day": i, "match_index": idx}, {"$set": {"challenges": challenges}}, upsert=True)
                         st.success(f"Challenge activated: {challenge_choice} on hole {hole}")
-                # Show used challenges table
                 if challenges:
                     df_ch = pd.DataFrame([{"Hole": c["hole"], "Player": c["challenger"], "Challenge": c["challenge"]} for c in challenges])
                     st.table(df_ch)
