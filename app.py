@@ -1,5 +1,6 @@
 import streamlit as st
 import certifi
+import ssl
 from pymongo import MongoClient
 
 # --- Configuration ---
@@ -11,14 +12,22 @@ if not db_uri:
     st.error("MONGODB_URI not found in Streamlit Secrets. Please add it under Settings → Secrets.")
     st.stop()
 
-# Connect to MongoDB with TLS
+# Connect to MongoDB with TLS, allowing invalid certs if necessary
 client = MongoClient(
     db_uri,
     tls=True,
     tlsCAFile=certifi.where(),
+    tlsAllowInvalidCertificates=True,
     connectTimeoutMS=30000,
     serverSelectionTimeoutMS=30000
 )
+try:
+    # Trigger a server check
+    client.admin.command('ping')
+except Exception as e:
+    st.error(f"MongoDB connection failed: {e}")
+    st.stop()
+
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
@@ -106,7 +115,6 @@ for i, tab in enumerate(tabs, start=1):
     with tab:
         st.subheader(f"Day {i}: {DAY_DETAILS[i]['subtitle']}")
         st.markdown("- " + "\n- ".join(DAY_DETAILS[i]["rules"]))
-        # Day totals\        
         dt = {"Team A":0, "Team B":0}
         for idx, (p1, p2) in enumerate(matches[i]):
             rec = scores_col.find_one({"day": i, "match_index": idx}) or {}
@@ -119,7 +127,6 @@ for i, tab in enumerate(tabs, start=1):
                 dt["Team A"] += pts.get("Team A",0)
                 dt["Team B"] += pts.get("Team B",0)
         st.write(f"**Totals:** A {dt['Team A']} — B {dt['Team B']}")
-        # Matches per day
         for idx, (p1, p2) in enumerate(matches[i]):
             with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
                 rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players":(p1,p2), "hole_scores":{}, "challenges":[]}
@@ -146,7 +153,6 @@ for i, tab in enumerate(tabs, start=1):
                         update["team_points"] = pts
                     scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
                     st.toast(f"Saved hole {hole}")
-                # Challenges UI
                 st.write("Used:", [f"{c['challenger']}@{c['hole']}" for c in challenges])
                 ch1, ch2, ch3 = st.columns([2,3,1])
                 challenger = ch1.selectbox("Who?", options=p1+p2, key=f"c_{i}_{idx}")
