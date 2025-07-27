@@ -159,12 +159,12 @@ for i, tab in enumerate(tabs, start=1):
                     scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
                     st.toast(f"Saved hole {hole}")
 
-                                # Show hole scores table with per-hole points
+                                                # Show hole scores table with per-hole points
                 if hole_scores:
                     rows = []
                     for h, sc in sorted(hole_scores.items()):
+                        hole_pts = compute_points({h: sc}, p1, p2)
                         if len(p1) == 1:
-                            hole_pts = compute_points({h: sc}, p1, p2)
                             rows.append({
                                 "Hole": h,
                                 p1[0]: sc[p1[0]],
@@ -173,7 +173,6 @@ for i, tab in enumerate(tabs, start=1):
                                 f"{p2[0]} Pts": hole_pts[p2[0]],
                             })
                         else:
-                            hole_pts = compute_points({h: sc}, p1, p2)
                             rows.append({
                                 "Hole": h,
                                 "Team A": sc["Team A"],
@@ -182,7 +181,7 @@ for i, tab in enumerate(tabs, start=1):
                                 "Team B Pts": hole_pts["Team B"],
                             })
                     df = pd.DataFrame(rows).reset_index(drop=True)
-st.dataframe(df, hide_index=True)
+                    st.dataframe(df, hide_index=True)
                 else:
                     st.info("No hole scores entered yet.")
 
