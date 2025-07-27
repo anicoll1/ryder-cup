@@ -200,25 +200,51 @@ for i, tab in enumerate(tabs, start=1):
                 else:
                     st.info("No hole scores entered yet.")
 
-                # Challenge activation
+                                # Challenge activation
                 st.subheader("Sabotage Challenges")
-                if challenges:
-                    st.write("Used:", [f"{c['challenger']}@{c['hole']}" for c in challenges])
+                # Input controls aligned in row
                 ch1, ch2, ch3 = st.columns([2, 3, 1])
-                challenger = ch1.selectbox("Who?", options=p1+p2, key=f"challenger_{i}_{idx}_{hole}")
-                challenge_choice = ch2.selectbox("Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}")
-                if ch3.button("Activate Challenge", key=f"activate_{i}_{idx}_{hole}"):
-                    half = 1 if hole <= 9 else 2
-                    used = [c for c in challenges if c['challenger'] == challenger and c['half'] == half]
-                    if used:
-                        st.error(f"{challenger} already used a challenge this half.")
-                    else:
-                        new = {"hole": hole, "half": half, "challenger": challenger, "challenge": challenge_choice}
-                        challenges.append(new)
-                        scores_col.update_one({"day": i, "match_index": idx}, {"$set": {"challenges": challenges}}, upsert=True)
-                        st.success(f"Challenge activated: {challenge_choice} on hole {hole}")
+                with ch1:
+                    challenger = st.selectbox(
+                        "Who?", options=p1 + p2, key=f"challenger_{i}_{idx}_{hole}"
+                    )
+                with ch2:
+                    challenge_choice = st.selectbox(
+                        "Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}"
+                    )
+                with ch3:
+                    if st.button(
+                        "Activate Challenge", key=f"activate_{i}_{idx}_{hole}"
+                    ):
+                        half = 1 if hole <= 9 else 2
+                        used = [c for c in challenges if c['challenger'] == challenger and c['half'] == half]
+                        if used:
+                            st.error(f"{challenger} already used a challenge this half.")
+                        else:
+                            new = {
+                                "hole": hole,
+                                "half": half,
+                                "challenger": challenger,
+                                "challenge": challenge_choice,
+                            }
+                            challenges.append(new)
+                            scores_col.update_one(
+                                {"day": i, "match_index": idx},
+                                {"$set": {"challenges": challenges}},
+                                upsert=True,
+                            )
+                            st.success(f"Challenge activated: {challenge_choice} on hole {hole}")
 
-                # Display challenges table
+                # Display used challenges below inputs
+                if challenges:
+                    st.write("Used Challenges:")
+                    cr = [
+                        {"Hole": c["hole"], "Player": c["challenger"], "Challenge": c["challenge"]}
+                        for c in challenges
+                    ]
+                    st.table(pd.DataFrame(cr))
+                else:
+                    st.info("No challenges used yet.")
                 if challenges:
                     cr = [{"Hole": c["hole"], "Player": c["challenger"], "Challenge": c["challenge"]} for c in challenges]
                     st.table(pd.DataFrame(cr))
