@@ -181,8 +181,8 @@ for i, tab in enumerate(tabs, start=1):
                                 "Team A Pts": hole_pts["Team A"],
                                 "Team B Pts": hole_pts["Team B"],
                             })
-                    df = pd.DataFrame(rows)
-                    st.table(df.style.hide_index())
+                    df = pd.DataFrame(rows).reset_index(drop=True)
+st.dataframe(df, hide_index=True)
                 else:
                     st.info("No hole scores entered yet.")
 
