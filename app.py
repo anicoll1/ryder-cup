@@ -7,7 +7,13 @@ st.set_page_config(page_title="Ryder Cup Scorekeeper", layout="wide", initial_si
 
 # Load MongoDB URI from secrets
 MONGODB_URI = st.secrets["mongodb_uri"]
-client = MongoClient(MONGODB_URI, tlsCAFile=certifi.where())
+client = MongoClient(
+    MONGODB_URI,
+    tls=True,
+    tlsCAFile=certifi.where(),
+    connectTimeoutMS=30000,
+    serverSelectionTimeoutMS=30000
+)
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
@@ -136,3 +142,4 @@ for i,tab in enumerate(tabs, start=1):
                 st.write("Holes:", sorted(hole_scores.items()))
 
 st.markdown("---")
+st.caption("Make sure you’ve added your `MONGODB_URI` in Streamlit Cloud Secrets (Settings → Secrets → Add `MONGODB_URI`).")
