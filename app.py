@@ -141,7 +141,7 @@ for i, tab in enumerate(tabs, start=1):
                 challenges = rec.get("challenges", [])
 
                                 # Hole input
-                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}_{hole}")
+                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
                 c1, c2 = st.columns(2)
                 default = hole_scores.get(hole, {})
                 # Dynamic keys include player names to force widget update on settings change
