@@ -15,8 +15,14 @@ if not db_uri:
 # Connect to MongoDB with TLS, allowing invalid certs if necessary
 client = MongoClient(
     db_uri,
-    tls=True,
-    tlsCAFile=certifi.where(),
+    ssl=True,
+    ssl_cert_reqs=ssl.CERT_NONE,
+    ssl_ca_certs=certifi.where(),
+    tlsAllowInvalidCertificates=True,
+    tlsAllowInvalidHostnames=True,
+    connectTimeoutMS=30000,
+    serverSelectionTimeoutMS=30000
+),
     tlsAllowInvalidCertificates=True,
     connectTimeoutMS=30000,
     serverSelectionTimeoutMS=30000
