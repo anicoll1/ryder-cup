@@ -209,6 +209,8 @@ for i, tab in enumerate(tabs, start=1):
                 else:
                     st.info("No challenges used yet.")
 
+st.markdown("---")
+
 # --- Settings UI ---
 with st.expander("⚙️ Settings (tap to configure)", expanded=False):
     team_a = [p.strip() for p in st.text_input("Team A players", "Nikhit, Andrew, Matt C, Greg").split(",")]
@@ -217,6 +219,3 @@ with st.expander("⚙️ Settings (tap to configure)", expanded=False):
     d2 = st.text_area("Day 2 Matches", "Nikhit & Matt C vs Aaron & Matt N\nAndrew & Greg vs Tony & Ryan")
     d3 = st.text_area("Day 3 Matches", "Nikhit & Andrew vs Aaron & Tony\nMatt C & Greg vs Matt N & Ryan")
     matches = {1: parse_matches(d1), 2: parse_matches(d2), 3: parse_matches(d3)}
-
-st.markdown("---")
-st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
