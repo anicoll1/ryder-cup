@@ -12,22 +12,23 @@ if not db_uri:
     st.error("MONGODB_URI not found in Streamlit Secrets. Please add it under Settings → Secrets.")
     st.stop()
 
-# Connect to MongoDB with TLS, allowing invalid certificates
+# Connect to MongoDB with TLS CA certs only
 try:
+    # Use default TLS settings but provide CA bundle
     client = MongoClient(
         db_uri,
-        tls=True,
-        tlsVersion=ssl.PROTOCOL_TLSv1_2,
         tlsCAFile=certifi.where(),
-        tlsAllowInvalidCertificates=True,
-        tlsAllowInvalidHostnames=True,
         connectTimeoutMS=30000,
         serverSelectionTimeoutMS=30000
     )
-    # Trigger a server check
+    # Quick server check
     client.admin.command('ping')
 except Exception as e:
-    st.error(f"MongoDB connection failed: {e}")
+    st.error(
+        "MongoDB connection failed. This often indicates a network or cluster configuration issue. "
+        "Double-check your Atlas network access (IP whitelist, SRV URI) and that MONGODB_URI is correct. "
+        f"Error details: {e}"
+    )
     st.stop()
 
 # Database and collection
