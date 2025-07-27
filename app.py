@@ -1,4 +1,5 @@
 import streamlit as st
+import certifi
 from pymongo import MongoClient
 
 # Page config for mobile-friendly, full-width layout
@@ -6,7 +7,7 @@ st.set_page_config(page_title="Ryder Cup Scorekeeper", layout="wide", initial_si
 
 # Load MongoDB URI from secrets
 MONGODB_URI = st.secrets["mongodb_uri"]
-client = MongoClient(MONGODB_URI)
+client = MongoClient(MONGODB_URI, tlsCAFile=certifi.where())
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
