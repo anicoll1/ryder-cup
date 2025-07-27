@@ -156,10 +156,10 @@ for i, tab in enumerate(tabs, start=1):
                 hole_scores = {int(k): v for k, v in raw_scores.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
 
-                # Clear match
+                                # Clear match
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
-    scores_col.delete_one({"day": i, "match_index": idx})
-    st.success(f"Cleared Match {idx+1}. Please refresh or reload to see changes.")
+                    scores_col.delete_one({"day": i, "match_index": idx})
+                    st.success(f"Cleared Match {idx+1}. Please refresh or reload to see changes."))
 
                 # Hole entry
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
