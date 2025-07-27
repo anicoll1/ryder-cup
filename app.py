@@ -31,7 +31,7 @@ CHALLENGES = [
 ]
 
 # Parse match strings
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def parse_matches(lines):
     m=[]
     for line in lines.splitlines():
