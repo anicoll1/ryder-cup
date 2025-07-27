@@ -116,7 +116,10 @@ col2.markdown(f"**Roster B:** {', '.join(team_b)}")
 if st.button("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
     st.success("Tournament reset.")
-    st.experimental_rerun()
+    try:
+        st.experimental_rerun()
+    except AttributeError:
+        st.stop()
 
 # --- Day Tabs ---
 tabs = st.tabs([f"Day {i}" for i in (1,2,3)])
@@ -144,7 +147,10 @@ for i, tab in enumerate(tabs, start=1):
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
                     scores_col.delete_one({"day": i, "match_index": idx})
                     st.success(f"Cleared Match {idx+1}.")
-                    st.experimental_rerun()
+                    try:
+                        st.experimental_rerun()
+                    except AttributeError:
+                        st.stop()
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
                 c1, c2 = st.columns(2)
                 default = hole_scores.get(hole, {})
