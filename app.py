@@ -12,13 +12,12 @@ if not db_uri:
     st.error("MONGODB_URI not found in Streamlit Secrets. Please add it under Settings → Secrets.")
     st.stop()
 
-# Connect to MongoDB with TLS, allowing invalid certs if necessary
+# Connect to MongoDB with TLS, allowing invalid certificates
 try:
     client = MongoClient(
         db_uri,
-        ssl=True,
-        ssl_cert_reqs=ssl.CERT_NONE,
-        ssl_ca_certs=certifi.where(),
+        tls=True,
+        tlsCAFile=certifi.where(),
         tlsAllowInvalidCertificates=True,
         tlsAllowInvalidHostnames=True,
         connectTimeoutMS=30000,
