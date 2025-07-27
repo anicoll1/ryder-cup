@@ -95,20 +95,18 @@ def compute_points(hole_scores, p1, p2):
             pts["Team B"] += 0.5
     return pts
 
-# --- Settings UI ---
-with st.expander("⚙️ Settings (tap to configure)", expanded=False):
-    team_a = [p.strip() for p in st.text_input("Team A players", "Nikhit, Andrew, Matt C, Greg").split(",")]
-    team_b = [p.strip() for p in st.text_input("Team B players", "Aaron, Tony, Matt N, Ryan").split(",")]
-    d1 = st.text_area("Day 1 Matches", "Nikhit vs Aaron\nAndrew vs Tony\nMatt C vs Matt N\nGreg vs Ryan")
-    d2 = st.text_area("Day 2 Matches", "Nikhit & Matt C vs Aaron & Matt N\nAndrew & Greg vs Tony & Ryan")
-    d3 = st.text_area("Day 3 Matches", "Nikhit & Andrew vs Aaron & Tony\nMatt C & Greg vs Matt N & Ryan")
-    matches = {1: parse_matches(d1), 2: parse_matches(d2), 3: parse_matches(d3)}
-
 # --- Scoreboard & Reset ---
 st.title("🏌️ Ryder Cup Scorekeeper")
 col1, col2 = st.columns(2)
 # Compute totals
 totals = {"Team A": 0, "Team B": 0}
+# default matches before settings
+default_matches = {
+    1: parse_matches("Nikhit vs Aaron\nAndrew vs Tony\nMatt C vs Matt N\nGreg vs Ryan"),
+    2: parse_matches("Nikhit & Matt C vs Aaron & Matt N\nAndrew & Greg vs Tony & Ryan"),
+    3: parse_matches("Nikhit & Andrew vs Aaron & Tony\nMatt C & Greg vs Matt N & Ryan")
+}
+matches = default_matches
 for day, ms in matches.items():
     for idx, (p1, p2) in enumerate(ms):
         rec = scores_col.find_one({"day": day, "match_index": idx}) or {}
@@ -120,10 +118,8 @@ for day, ms in matches.items():
         else:
             totals["Team A"] += pts.get("Team A", 0)
             totals["Team B"] += pts.get("Team B", 0)
-col1.metric("Team A", totals["Team A"]);
-col1.markdown(f"**Roster A:** {', '.join(team_a)}")
-col2.metric("Team B", totals["Team B"]);
-col2.markdown(f"**Roster B:** {', '.join(team_b)}")
+col1.metric("Team A", totals["Team A"])
+col2.metric("Team B", totals["Team B"])
 if st.button("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
     st.success("Tournament reset. Please refresh to see changes.")
@@ -134,7 +130,6 @@ for i, tab in enumerate(tabs, start=1):
     with tab:
         st.subheader(f"Day {i}: {DAY_DETAILS[i]['subtitle']}")
         st.markdown("- " + "\n- ".join(DAY_DETAILS[i]["rules"]))
-        # Day totals
         day_tot = {"Team A": 0, "Team B": 0}
         for idx, (p1, p2) in enumerate(matches[i]):
             rec = scores_col.find_one({"day": i, "match_index": idx}) or {}
@@ -147,22 +142,15 @@ for i, tab in enumerate(tabs, start=1):
                 day_tot["Team A"] += pts.get("Team A", 0)
                 day_tot["Team B"] += pts.get("Team B", 0)
         st.write(f"**Totals:** A {day_tot['Team A']} — B {day_tot['Team B']}")
-
-        # Matches
         for idx, (p1, p2) in enumerate(matches[i]):
             with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
-                # Load data
                 rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players": (p1, p2), "hole_scores": {}, "challenges": []}
                 raw_scores = rec.get("hole_scores", {})
                 hole_scores = {int(k): v for k, v in raw_scores.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
-
-                # Clear match
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
                     scores_col.delete_one({"day": i, "match_index": idx})
                     st.success(f"Cleared Match {idx+1}. Please refresh to see changes.")
-
-                # Hole entry
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
                 col_a, col_b = st.columns(2)
                 default = hole_scores.get(hole, {})
@@ -186,8 +174,6 @@ for i, tab in enumerate(tabs, start=1):
                     update["total_points" if len(p1) == 1 else "team_points"] = pts
                     scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
                     st.toast(f"Saved hole {hole}")
-
-                # Display hole scores
                 if hole_scores:
                     rows = []
                     for h, sc in sorted(hole_scores.items()):
@@ -202,7 +188,6 @@ for i, tab in enumerate(tabs, start=1):
                     st.dataframe(df, hide_index=True)
                 else:
                     st.info("No hole scores entered yet.")
-
                 # Sabotage Challenges
                 st.subheader("Sabotage Challenges")
                 cols_ch = st.columns([2, 3, 1])
@@ -223,5 +208,13 @@ for i, tab in enumerate(tabs, start=1):
                 else:
                     st.info("No challenges used yet.")
 
+# --- Settings UI ---
+with st.expander("⚙️ Settings (tap to configure)", expanded=False):
+    team_a = [p.strip() for p in st.text_input("Team A players", "Nikhit, Andrew, Matt C, Greg").split(",")]
+    team_b = [p.strip() for p in st.text_input("Team B players", "Aaron, Tony, Matt N, Ryan").split(",")]
+    d1 = st.text_area("Day 1 Matches", "Nikhit vs Aaron\nAndrew vs Tony\nMatt C vs Matt N\nGreg vs Ryan")
+    d2 = st.text_area("Day 2 Matches", "Nikhit & Matt C vs Aaron & Matt N\nAndrew & Greg vs Tony & Ryan")
+    d3 = st.text_area("Day 3 Matches", "Nikhit & Andrew vs Aaron & Tony\nMatt C & Greg vs Matt N & Ryan")
+    matches = {1: parse_matches(d1), 2: parse_matches(d2), 3: parse_matches(d3)}
+
 st.markdown("---")
-st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
