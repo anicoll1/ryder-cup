@@ -201,6 +201,9 @@ for i, tab in enumerate(tabs, start=1):
                 cols = st.columns([2, 3, 1])
                 challenger = cols[0].selectbox("Who?", options=p1 + p2, key=f"challenger_{i}_{idx}_{hole}")
                 challenge_choice = cols[1].selectbox("Challenge", options=CHALLENGES, key=f"challenge_{i}_{idx}_{hole}")
+# Display challenge description before activation
+time_description = CHALLENGE_DESCRIPTIONS.get(challenge_choice, "")
+cols[1].caption(time_description)
                 if cols[2].button("Activate Challenge", key=f"activate_{i}_{idx}_{hole}"):
                     half = 1 if hole <= 9 else 2
                     if any(c['challenger'] == challenger and c['half'] == half for c in challenges):
