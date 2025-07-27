@@ -37,11 +37,19 @@ DAY_DETAILS = {
     3: {"subtitle": "Alternate Shot (Foursomes, 18 Holes)",
         "rules": ["One ball, alternate shots & tees.", "1 pt match, 0.5 tie.", "2 pts total"]}
 }
-CHALLENGES = [
-    "🦅 NO TEE FOR YOU", "💬 CADDY’S CHOICE", "🪖 FULL METAL PUTTER",
-    "📏 STUBBY STICKS ONLY", "👶 BABY GRIP", "🙃 BACKWARDS GRIP",
-    "🦶 HAPPY GILMORE ONLY", "🐦 FLAMINGO MODE"
-]
+# Define sabotage challenges and their descriptions
+CHALLENGE_DESCRIPTIONS = {
+    "🦅 NO TEE FOR YOU": "On the next tee box, the target must hit their driver directly off the ground—no tee allowed.",
+    "💬 CADDY’S CHOICE": "You choose the target’s club for their next shot.",
+    "🪖 FULL METAL PUTTER": "Target must putt the next hole using a wedge or hybrid—no putter allowed.",
+    "📏 STUBBY STICKS ONLY": "For the next hole, the target can only use clubs shorter than a 9-iron (putter, wedges).",
+    "👶 BABY GRIP": "Opponent must grip their club halfway down the shaft, like a toddler holding a broomstick.",
+    "🙃 BACKWARDS GRIP": "Opponent must hold the club with their hands reversed—left hand low for righties.",
+    "🦶 HAPPY GILMORE ONLY": "Opponent must attempt a running swing for the next shot.",
+    "🐦 FLAMINGO MODE": "Hit the next swing standing on one foot (balance challenge!)."
+}
+# Keys for UI dropdowns
+CHALLENGES = list(CHALLENGE_DESCRIPTIONS.keys())
 
 # --- Helpers ---
 @st.cache_data
