@@ -141,16 +141,13 @@ for i, tab in enumerate(tabs, start=1):
         for idx, (p1, p2) in enumerate(matches[i]):
             with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
                 rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players": (p1, p2), "hole_scores": {}, "challenges": []}
-                # Load and normalize hole_scores: keys from Mongo are strings, convert to ints for editing
+                                # Load and normalize hole_scores: convert string keys to ints
                 raw_hole_scores = rec.get("hole_scores", {})
                 hole_scores = {int(k): v for k, v in raw_hole_scores.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
+
                 # Select hole to edit
-                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}") {' & '.join(p1)} vs {' & '.join(p2)}"):
-                rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players":(p1,p2), "hole_scores":{}, "challenges":[]}
-                hole_scores = rec["hole_scores"]
-                challenges = rec.get("challenges", [])
-                hole = st.select_slider("Hole", options=list(range(1,19)), key=f"h_{i}_{idx}")
+                hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
                 c1, c2 = st.columns(2)
                 default = hole_scores.get(hole, {})
                 if len(p1)==1:
