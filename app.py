@@ -125,6 +125,8 @@ col2.metric("Team B", totals["Team B"])
 col2.markdown(f"**Roster B:** {', '.join(team_b)}")
 if st.button("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
+    st.success("Tournament reset. Please refresh the page to see changes."):
+    scores_col.delete_many({})
     st.success("Tournament reset.")
     st.experimental_rerun()
 
@@ -159,6 +161,8 @@ for i, tab in enumerate(tabs, start=1):
 
                 # Clear match
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
+                    scores_col.delete_one({"day": i, "match_index": idx})
+                    st.success(f"Cleared Match {idx+1}. Please refresh the page to see changes."):
                     scores_col.delete_one({"day": i, "match_index": idx})
                     st.success(f"Cleared Match {idx+1}.")
                     st.experimental_rerun()
