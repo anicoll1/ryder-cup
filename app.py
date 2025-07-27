@@ -102,8 +102,10 @@ for day,ms in matches.items():
             d["Team A"]+=pts.get("Team A",0); d["Team B"]+=pts.get("Team B",0)
 col1.metric("Team A",d["Team A"]); st.markdown(f"Roster A: {', '.join(team_a)}")
 col2.metric("Team B",d["Team B"]); st.markdown(f"Roster B: {', '.join(team_b)}")
-if st.button("Reset Tournament",key="reset_all"):
-    scores_col.delete_many({}); st.success("Tournament reset.")
+if st.button("Reset Tournament", key="reset_all"):
+    scores_col.delete_many({})
+    st.success("Tournament reset.")
+    st.experimental_rerun()
 
 # --- Per-Day Tabs ---
 tabs=st.tabs([f"Day {i}" for i in (1,2,3)])
