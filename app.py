@@ -13,26 +13,26 @@ if not db_uri:
     st.stop()
 
 # Connect to MongoDB with TLS, allowing invalid certs if necessary
-client = MongoClient(
-    db_uri,
-    ssl=True,
-    ssl_cert_reqs=ssl.CERT_NONE,
-    ssl_ca_certs=certifi.where(),
-    tlsAllowInvalidCertificates=True,
-    tlsAllowInvalidHostnames=True,
-    connectTimeoutMS=30000,
-    serverSelectionTimeoutMS=30000
-),
-    tlsAllowInvalidCertificates=True,
-    connectTimeoutMS=30000,
-    serverSelectionTimeoutMS=30000
-)
 try:
+    client = MongoClient(
+        db_uri,
+        ssl=True,
+        ssl_cert_reqs=ssl.CERT_NONE,
+        ssl_ca_certs=certifi.where(),
+        tlsAllowInvalidCertificates=True,
+        tlsAllowInvalidHostnames=True,
+        connectTimeoutMS=30000,
+        serverSelectionTimeoutMS=30000
+    )
     # Trigger a server check
     client.admin.command('ping')
 except Exception as e:
     st.error(f"MongoDB connection failed: {e}")
     st.stop()
+
+# Database and collection
+client.encoding = 'utf-8'  # ensure unicode support
+client_server_info = client.server_info()  # not used, ensures connection
 
 db = client["ryder_cup"]
 scores_col = db["matches"]
