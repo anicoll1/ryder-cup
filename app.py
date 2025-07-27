@@ -125,10 +125,7 @@ col2.metric("Team B", totals["Team B"])
 col2.markdown(f"**Roster B:** {', '.join(team_b)}")
 if st.button("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
-    st.success("Tournament reset. Please refresh the page to see changes."):
-    scores_col.delete_many({})
-    st.success("Tournament reset.")
-    st.experimental_rerun()
+    st.success("Tournament reset. Please refresh or reload to see changes.")
 
 # --- Day Tabs & Match UI ---
 tabs = st.tabs([f"Day {i}" for i in (1, 2, 3)])
@@ -161,11 +158,8 @@ for i, tab in enumerate(tabs, start=1):
 
                 # Clear match
                 if st.button("Clear Match Scores", key=f"clear_{i}_{idx}"):
-                    scores_col.delete_one({"day": i, "match_index": idx})
-                    st.success(f"Cleared Match {idx+1}. Please refresh the page to see changes."):
-                    scores_col.delete_one({"day": i, "match_index": idx})
-                    st.success(f"Cleared Match {idx+1}.")
-                    st.experimental_rerun()
+    scores_col.delete_one({"day": i, "match_index": idx})
+    st.success(f"Cleared Match {idx+1}. Please refresh or reload to see changes.")
 
                 # Hole entry
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
