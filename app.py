@@ -152,14 +152,16 @@ for i, tab in enumerate(tabs, start=1):
                     entry = {"Team A": s1, "Team B": s2}
                 if st.button("Save", key=f"save_{i}_{idx}_{hole}"):
                     hole_scores[hole] = entry
-                    pts = compute_points(hole_scores, p1, p2)
-                    update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": hole_scores}
-                    if len(p1)==1:
-                        update["total_points"] = pts
-                    else:
-                        update["team_points"] = pts
-                    scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
-                    st.toast(f"Saved hole {hole}")
+pts = compute_points(hole_scores, p1, p2)
+# convert hole_scores keys to strings for MongoDB
+db_hole_scores = {str(k): v for k, v in hole_scores.items()}
+update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": db_hole_scores}
+if len(p1) == 1:
+    update["total_points"] = pts
+else:
+    update["team_points"] = pts
+scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
+st.toast(f"Saved hole {hole}")
                 st.write("Used:", [f"{c['challenger']}@{c['hole']}" for c in challenges])
                 ch1, ch2, ch3 = st.columns([2,3,1])
                 challenger = ch1.selectbox("Who?", options=p1+p2, key=f"c_{i}_{idx}")
@@ -176,4 +178,3 @@ for i, tab in enumerate(tabs, start=1):
                 st.write("Holes:", sorted(hole_scores.items()))
 
 st.markdown("---")
-st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
