@@ -107,7 +107,9 @@ def get_tourney_score():
 st.title("🏌️ Ryder Cup Scorekeeper")
 col1, col2 = st.columns(2)
 col1.metric("Team A", get_tourney_score()["Team A"])
+st.markdown(f"**Team A roster:** {', '.join(team_a)}")
 col2.metric("Team B", get_tourney_score()["Team B"])
+st.markdown(f"**Team B roster:** {', '.join(team_b)}")
 
 # --- Day Tabs ---
 tabs = st.tabs([f"Day {i}" for i in (1,2,3)])
