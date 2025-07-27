@@ -53,30 +53,72 @@ CHALLENGES = list(CHALLENGE_DESCRIPTIONS.keys())
 
 # --- Helpers ---
 @st.cache_data
-def parse_matches(text):
-    matches = []
-    for line in text.splitlines():
-        if "vs" in line:
-            left, right = line.split("vs")
-            p1 = [x.strip() for x in left.split("&")]
-            p2 = [x.strip() for x in right.split("&")]
-            matches.append((p1, p2))
-    return matches
-
-@st.cache_data
+\
 def compute_points(hole_scores, p1, p2):
+\
+    # Singles
+\
     if len(p1) == 1:
+\
         pts = {p1[0]: 0, p2[0]: 0}
+\
         for sc in hole_scores.values():
-            s1, s2 = sc.get(p1[0]), sc.get(p2[0])
+\
+            s1 = sc.get(p1[0])
+\
+            s2 = sc.get(p2[0])
+\
             if s1 is None or s2 is None:
+\
                 continue
+\
             if s1 < s2:
+\
                 pts[p1[0]] += 1
+\
             elif s1 > s2:
+\
                 pts[p2[0]] += 1
+\
             else:
-                    st.info("No challenges used yet."))
+\
+                pts[p1[0]] += 0.5
+\
+                pts[p2[0]] += 0.5
+\
+        return pts
+\
+    # Team formats
+\
+    pts = {"Team A": 0, "Team B": 0}
+\
+    for sc in hole_scores.values():
+\
+        s1 = sc.get("Team A")
+\
+        s2 = sc.get("Team B")
+\
+        if s1 is None or s2 is None:
+\
+            continue
+\
+        if s1 < s2:
+\
+            pts["Team A"] += 1
+\
+        elif s1 > s2:
+\
+            pts["Team B"] += 1
+\
+        else:
+\
+            pts["Team A"] += 0.5
+\
+            pts["Team B"] += 0.5
+\
+    return pts
+
+# --- Settings ---)
 
 st.markdown("---")
 st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
