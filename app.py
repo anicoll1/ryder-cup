@@ -17,6 +17,7 @@ try:
     client = MongoClient(
         db_uri,
         tls=True,
+        tlsVersion=ssl.PROTOCOL_TLSv1_2,
         tlsCAFile=certifi.where(),
         tlsAllowInvalidCertificates=True,
         tlsAllowInvalidHostnames=True,
