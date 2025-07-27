@@ -159,10 +159,6 @@ for i, tab in enumerate(tabs, start=1):
                     s1 = c1.number_input(" & ".join(p1), 1, 10, default.get("Team A", 1), key=key1)
                     s2 = c2.number_input(" & ".join(p2), 1, 10, default.get("Team B", 1), key=key2)
                     entry = {"Team A": s1, "Team B": s2}
-                else:
-                    s1 = c1.number_input(' & '.join(p1), 1, 10, default.get("Team A", 1), key=f"{i}_{idx}_{hole}_0")
-                    s2 = c2.number_input(' & '.join(p2), 1, 10, default.get("Team B", 1), key=f"{i}_{idx}_{hole}_1")
-                    entry = {"Team A": s1, "Team B": s2}
                 if st.button("Save Hole Score", key=f"save_{i}_{idx}_{hole}"):
                     hole_scores[hole] = entry
                     pts = compute_points(hole_scores, p1, p2)
