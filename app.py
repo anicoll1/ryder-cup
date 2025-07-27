@@ -118,16 +118,10 @@ for day, ms in matches.items():
         else:
             totals["Team A"] += pts.get("Team A", 0)
             totals["Team B"] += pts.get("Team B", 0)
-col2.markdown(
-    f"<p style='font-size:72px; text-align:center; color:#1f77b4;'>{totals['Team B']}</p>",
-    unsafe_allow_html=True
-)
-col2.markdown(
-    "<p style='text-align:center; font-weight:bold;'>Team B</p>",
-    unsafe_allow_html=True
-)
+col1.metric("Team A", totals["Team A"])
 col2.metric("Team B", totals["Team B"])
-if st.button("Reset Tournament", key="reset_all"):
+
+if st.button("Reset Tournament", key="reset_all"):("Reset Tournament", key="reset_all"):
     scores_col.delete_many({})
     st.success("Tournament reset. Please refresh to see changes.")
 
