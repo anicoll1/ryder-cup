@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import certifi
 from pymongo import MongoClient
 
@@ -11,7 +12,7 @@ if not db_uri:
     st.error("MONGODB_URI not found in Streamlit Secrets. Please add it under Settings → Secrets.")
     st.stop()
 
-# Connect to MongoDB with TLS CA certs only
+# Connect to MongoDB (using CA bundle)
 try:
     client = MongoClient(
         db_uri,
@@ -22,13 +23,11 @@ try:
     client.admin.command('ping')
 except Exception as e:
     st.error(
-        "MongoDB connection failed. This often indicates a network or cluster configuration issue. "
-        "Double-check your Atlas network access (IP whitelist, SRV URI) and that MONGODB_URI is correct. "
-        f"Error details: {e}"
+        "MongoDB connection failed. Double-check network access, SRV URI, and credentials. "
+        f"Error: {e}"
     )
     st.stop()
 
-# Database and collection
 db = client["ryder_cup"]
 scores_col = db["matches"]
 
@@ -64,34 +63,24 @@ def compute_points(hole_scores, p1, p2):
     if len(p1) == 1:
         pts = {p1[0]: 0, p2[0]: 0}
         for scores in hole_scores.values():
-            s1 = scores.get(p1[0]); s2 = scores.get(p2[0])
-            if s1 is None or s2 is None:
-                continue
-            if s1 < s2:
-                pts[p1[0]] += 1
-            elif s1 > s2:
-                pts[p2[0]] += 1
-            else:
-                pts[p1[0]] += 0.5
-                pts[p2[0]] += 0.5
+            s1, s2 = scores.get(p1[0]), scores.get(p2[0])
+            if s1 is None or s2 is None: continue
+            if s1 < s2: pts[p1[0]] += 1
+            elif s1 > s2: pts[p2[0]] += 1
+            else: pts[p1[0]] += 0.5; pts[p2[0]] += 0.5
         return pts
     else:
         pts = {"Team A": 0, "Team B": 0}
         for scores in hole_scores.values():
-            s1 = scores.get("Team A"); s2 = scores.get("Team B")
-            if s1 is None or s2 is None:
-                continue
-            if s1 < s2:
-                pts["Team A"] += 1
-            elif s1 > s2:
-                pts["Team B"] += 1
-            else:
-                pts["Team A"] += 0.5
-                pts["Team B"] += 0.5
+            s1, s2 = scores.get("Team A"), scores.get("Team B")
+            if s1 is None or s2 is None: continue
+            if s1 < s2: pts["Team A"] += 1
+            elif s1 > s2: pts["Team B"] += 1
+            else: pts["Team A"] += 0.5; pts["Team B"] += 0.5
         return pts
 
-# --- Settings Expander ---
-with st.expander("⚙️ Settings (tap)", expanded=False):
+# --- Settings ---
+with st.expander("⚙️ Settings (tap to configure)", expanded=False):
     team_a = [p.strip() for p in st.text_input("Team A players", "Nikhit, Andrew, Matt C, Greg").split(",")]
     team_b = [p.strip() for p in st.text_input("Team B players", "Aaron, Tony, Matt N, Ryan").split(",")]
     d1 = st.text_area("Day 1 Matches", "Nikhit vs Aaron\nAndrew vs Tony\nMatt C vs Matt N\nGreg vs Ryan")
@@ -117,8 +106,8 @@ def get_tourney_score():
 
 st.title("🏌️ Ryder Cup Scorekeeper")
 col1, col2 = st.columns(2)
-col1.metric("Team A", get_tourney_score()["Team A"] )
-col2.metric("Team B", get_tourney_score()["Team B"] )
+col1.metric("Team A", get_tourney_score()["Team A"])
+col2.metric("Team B", get_tourney_score()["Team B"])
 
 # --- Day Tabs ---
 tabs = st.tabs([f"Day {i}" for i in (1,2,3)])
@@ -126,64 +115,68 @@ for i, tab in enumerate(tabs, start=1):
     with tab:
         st.subheader(f"Day {i}: {DAY_DETAILS[i]['subtitle']}")
         st.markdown("- " + "\n- ".join(DAY_DETAILS[i]["rules"]))
-        dt = {"Team A":0, "Team B":0}
+        # Day totals summary
+        dt = {"Team A": 0, "Team B": 0}
         for idx, (p1, p2) in enumerate(matches[i]):
             rec = scores_col.find_one({"day": i, "match_index": idx}) or {}
-            key = "total_points" if len(p1)==1 else "team_points"
+            key = "total_points" if len(p1) == 1 else "team_points"
             pts = rec.get(key, {})
             if len(p1) == 1:
-                dt["Team A"] += pts.get(p1[0],0)
-                dt["Team B"] += pts.get(p2[0],0)
+                dt["Team A"] += pts.get(p1[0], 0)
+                dt["Team B"] += pts.get(p2[0], 0)
             else:
-                dt["Team A"] += pts.get("Team A",0)
-                dt["Team B"] += pts.get("Team B",0)
+                dt["Team A"] += pts.get("Team A", 0)
+                dt["Team B"] += pts.get("Team B", 0)
         st.write(f"**Totals:** A {dt['Team A']} — B {dt['Team B']}")
+
+        # Per-match UI
         for idx, (p1, p2) in enumerate(matches[i]):
             with st.expander(f"Match {idx+1}: {' & '.join(p1)} vs {' & '.join(p2)}"):
                 rec = scores_col.find_one({"day": i, "match_index": idx}) or {"players": (p1, p2), "hole_scores": {}, "challenges": []}
-                                # Load and normalize hole_scores: convert string keys to ints
-                raw_hole_scores = rec.get("hole_scores", {})
-                hole_scores = {int(k): v for k, v in raw_hole_scores.items() if k.isdigit()}
+                # Normalize hole_scores keys
+                raw = rec.get("hole_scores", {})
+                hole_scores = {int(k): v for k, v in raw.items() if k.isdigit()}
                 challenges = rec.get("challenges", [])
 
-                # Select hole to edit
+                # Hole input
                 hole = st.select_slider("Hole", options=list(range(1, 19)), key=f"h_{i}_{idx}")
                 c1, c2 = st.columns(2)
                 default = hole_scores.get(hole, {})
-                if len(p1)==1:
-                    s1 = c1.number_input(p1[0], 1, 10, default.get(p1[0],1), key=f"{i}_{idx}_{hole}_0")
-                    s2 = c2.number_input(p2[0], 1, 10, default.get(p2[0],1), key=f"{i}_{idx}_{hole}_1")
+                if len(p1) == 1:
+                    s1 = c1.number_input(p1[0], 1, 10, default.get(p1[0], 1), key=f"{i}_{idx}_{hole}_0")
+                    s2 = c2.number_input(p2[0], 1, 10, default.get(p2[0], 1), key=f"{i}_{idx}_{hole}_1")
                     entry = {p1[0]: s1, p2[0]: s2}
                 else:
-                    s1 = c1.number_input(' & '.join(p1),1,10,default.get("Team A",1), key=f"{i}_{idx}_{hole}_0")
-                    s2 = c2.number_input(' & '.join(p2),1,10,default.get("Team B",1), key=f"{i}_{idx}_{hole}_1")
+                    s1 = c1.number_input(' & '.join(p1), 1, 10, default.get("Team A", 1), key=f"{i}_{idx}_{hole}_0")
+                    s2 = c2.number_input(' & '.join(p2), 1, 10, default.get("Team B", 1), key=f"{i}_{idx}_{hole}_1")
                     entry = {"Team A": s1, "Team B": s2}
-                if st.button("Save Hole Score",  key=f"save_{i}_{idx}_{hole}"):
+                if st.button("Save Hole Score", key=f"save_{i}_{idx}_{hole}"):
                     hole_scores[hole] = entry
                     pts = compute_points(hole_scores, p1, p2)
-                    db_hole_scores = {str(k): v for k, v in hole_scores.items()}
-                    update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": db_hole_scores}
-                    if len(p1) == 1:
-                        update["total_points"] = pts
-                    else:
-                        update["team_points"] = pts
+                    db_holes = {str(k): v for k, v in hole_scores.items()}
+                    update = {"day": i, "match_index": idx, "players": (p1, p2), "hole_scores": db_holes}
+                    update["total_points" if len(p1)==1 else "team_points"] = pts
                     scores_col.update_one({"day": i, "match_index": idx}, {"$set": update}, upsert=True)
                     st.toast(f"Saved hole {hole}")
-                # Challenges UI
-                st.write("Used:", [f"{c['challenger']}@{c['hole']}" for c in challenges])
-                ch1, ch2, ch3 = st.columns([2,3,1])
-                challenger = ch1.selectbox("Who?", options=p1+p2, key=f"c_{i}_{idx}")
-                chall = ch2.selectbox("Challenge", options=CHALLENGES, key=f"ch_{i}_{idx}")
-                if ch3.button("Activate Challenge",  key=f"a_{i}_{idx}_{hole}"):
-                    half = 1 if hole <= 9 else 2
-                    if any(c['challenger']==challenger and c['half']==half for c in challenges):
-                        st.error("Already used this half.")
-                    else:
-                        nu = {"hole": hole, "half": half, "challenger": challenger, "challenge": chall}
-                        rec.setdefault("challenges", []).append(nu)
-                        scores_col.update_one({"day": i, "match_index": idx}, {"$set": {"challenges": rec["challenges"]}}, upsert=True)
-                        st.toast("Challenge set")
-                st.write("Holes:", sorted(hole_scores.items()))
+
+                # Show hole scores table
+                if hole_scores:
+                    rows = []
+                    for h, sc in sorted(hole_scores.items()):
+                        if len(p1) == 1:
+                            rows.append({"Hole": h, p1[0]: sc[p1[0]], p2[0]: sc[p2[0]]})
+                        else:
+                            rows.append({"Hole": h, "Team A": sc["Team A"], "Team B": sc["Team B"]})
+                    st.table(pd.DataFrame(rows))
+                else:
+                    st.info("No hole scores entered yet.")
+
+                # Show challenges table
+                if challenges:
+                    ch_rows = [{"Hole": c["hole"], "Player": c["challenger"], "Challenge": c["challenge"]} for c in challenges]
+                    st.table(pd.DataFrame(ch_rows))
+                else:
+                    st.info("No challenges used yet.")
 
 st.markdown("---")
 st.caption("Deployed on Streamlit Cloud with MongoDB backend.")
