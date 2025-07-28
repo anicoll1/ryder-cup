@@ -31,11 +31,11 @@ scores_col = db["matches"]
 
 # --- Constants ---
 DAY_DETAILS = {
-    1: {"subtitle": "Singles Matches (18 Holes)",
+    1: {"subtitle": "Singles Matches",
         "rules": ["One-on-one match play.", "1 pt win, 0.5 tie.", "4 pts total"]},
-    2: {"subtitle": "2v2 Scramble (18 Holes)",
+    2: {"subtitle": "2v2 Scramble",
         "rules": ["Pick best tee shot, both play.", "1 pt match, 0.5 tie.", "2 pts total"]},
-    3: {"subtitle": "Alternate Shot (Foursomes, 18 Holes)",
+    3: {"subtitle": "Alternate Shot",
         "rules": ["One ball, alternate shots & tees.", "1 pt match, 0.5 tie.", "2 pts total"]}
 }
 
